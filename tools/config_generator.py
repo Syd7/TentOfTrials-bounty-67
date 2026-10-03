@@ -22,6 +22,7 @@ Usage:
 """
 
 import argparse
+from copy import deepcopy
 import json
 import os
 import sys
@@ -168,22 +169,21 @@ ENV_OVERRIDES: Dict[str, Dict[str, Any]] = {
 
 SENSITIVE_KEYS = [
     "database.password", "redis.password", "auth.jwt_secret",
-    "auth.jwt_secret", "auth.jwt_secret",
 ]
 
 
 def merge_config(base: Dict, override: Dict) -> Dict:
-    result = dict(base)
+    result = deepcopy(base)
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
             result[key] = merge_config(result[key], value)
         else:
-            result[key] = value
+            result[key] = deepcopy(value)
     return result
 
 
 def generate_config(env: str, overrides: Optional[Dict] = None) -> Dict:
-    config = dict(DEFAULT_CONFIG)
+    config = deepcopy(DEFAULT_CONFIG)
     if env in ENV_OVERRIDES:
         config = merge_config(config, ENV_OVERRIDES[env])
     if overrides:
@@ -200,7 +200,7 @@ def mask_sensitive(config: Dict, prefix: str = "") -> Dict:
         elif isinstance(value, dict):
             masked[key] = mask_sensitive(value, full_key)
         else:
-            masked[key] = value
+            masked[key] = deepcopy(value)
     return masked
 
 
